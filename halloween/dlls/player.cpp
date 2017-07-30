@@ -39,6 +39,9 @@
 #if defined ( SHALL_MAPFIXES )
 #include "shall_map_fixes.h"
 #endif // defined ( SHALL_MAPFIXES )
+#if defined ( CLIENT_FOG )
+#include "fog.h"
+#endif // defined ( CLIENT_FOG )
 
 // #define DUCKFIX
 
@@ -124,6 +127,9 @@ TYPEDESCRIPTION	CBasePlayer::m_playerSaveData[] =
 #if defined ( SHALL_DLL )
 	DEFINE_FIELD( CBasePlayer, m_bWasTouchingTriggerPushBeforeFinalBattle, FIELD_BOOLEAN ),
 #endif // defined ( SHALL_DLL )
+#if defined ( CLIENT_FOG )
+	DEFINE_FIELD( CBasePlayer, m_fUpdateFog, FIELD_BOOLEAN ),
+#endif // defined ( CLIENT_FOG )
 	
 	//DEFINE_FIELD( CBasePlayer, m_fDeadTime, FIELD_FLOAT ), // only used in multiplayer games
 	//DEFINE_FIELD( CBasePlayer, m_fGameHUDInitialized, FIELD_INTEGER ), // only used in multiplayer games
@@ -243,6 +249,9 @@ void LinkUserMessages( void )
 	gmsgStatusText = REG_USER_MSG("StatusText", -1);
 	gmsgStatusValue = REG_USER_MSG("StatusValue", 3); 
 
+#if defined ( CLIENT_FOG )
+	ClientFog_RegisterMessage();
+#endif // defined ( CLIENT_FOG )
 }
 
 LINK_ENTITY_TO_CLASS( player, CBasePlayer );
@@ -3007,6 +3016,10 @@ void CBasePlayer :: Precache( void )
 
 	if ( gInitHUD )
 		m_fInitHUD = TRUE;
+
+#if defined ( CLIENT_FOG )
+	TellClientToUpdateFog();
+#endif // defined ( CLIENT_FOG )
 }
 
 
@@ -4203,6 +4216,24 @@ void CBasePlayer :: UpdateClientData( void )
 		UpdateStatusBar();
 		m_flNextSBarUpdateTime = gpGlobals->time + 0.2;
 	}
+
+#if defined ( CLIENT_FOG )
+	if (ShouldUpdateFog())
+	{
+		BOOL foundActiveFogEntity = FALSE;
+		CBaseEntity* fogEntity = NULL;
+		while (!foundActiveFogEntity && (fogEntity = UTIL_FindEntityByClassname(fogEntity, FOG_ENTITY_CLASSNAME)) != NULL)
+		{
+			if (ClientFog_IsFogEntityActive(fogEntity))
+			{
+				foundActiveFogEntity = TRUE;
+				ClientFog_UpdateClientSide(fogEntity, this);
+			}
+		}
+
+		MarkFogAsUpdated();
+	}
+#endif // defined ( CLIENT_FOG )
 }
 
 
