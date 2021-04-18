@@ -2953,10 +2953,6 @@ void CBasePlayer::Spawn( void )
 	m_flNextChatTime = gpGlobals->time;
 
 #if defined ( SHALL_DLL )
-	// On 2001 version level, give the the suit to player.
-	if (IsCurrentMap("trick"))
-		pev->weapons |= (1 << WEAPON_SUIT);
-
 	m_bWasTouchingTriggerPushBeforeFinalBattle = FALSE;
 #endif // defined ( SHALL_DLL )
 	g_pGameRules->PlayerSpawn( this );
