@@ -70,15 +70,6 @@ BOOL IsCurrentMapPartOfCampaignOrTraining()
 	return foundMap;
 }
 
-#define IDEAL_RENDER_DISTANCE_FOR_SHALL_MOD		16384
-
-float GetIdealRenderDistance(float defaultDistance)
-{
-	if (IsCurrentMapPartOfCampaignOrTraining())
-		return IDEAL_RENDER_DISTANCE_FOR_SHALL_MOD;
-
-	return defaultDistance;
-}
 #endif // defined ( SHALL_DLL )
 float UTIL_WeaponTimeBase( void )
 {

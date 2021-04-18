@@ -693,14 +693,7 @@ void CWorld :: KeyValue( KeyValueData *pkvd )
 	}
 	else if ( FStrEq(pkvd->szKeyName, "MaxRange") )
 	{
-#if defined ( SHALL_DLL )
-		// Since this mod features large levels,
-		// therefore adjust the view distance to
-		// render a farer distance.
-		pev->speed = GetIdealRenderDistance(atof(pkvd->szValue));
-#else
 		pev->speed = std::atof(pkvd->szValue);
-#endif // defined ( SHALL_DLL )
 		pkvd->fHandled = TRUE;
 	}
 	else if ( FStrEq(pkvd->szKeyName, "chaptertitle") )

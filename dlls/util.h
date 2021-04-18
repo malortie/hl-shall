@@ -547,5 +547,4 @@ float UTIL_WeaponTimeBase( void );
 #if defined ( SHALL_DLL )
 BOOL IsCurrentMap(const char* mapname);
 BOOL IsCurrentMapPartOfCampaignOrTraining();
-float GetIdealRenderDistance(float defaultDistance);
 #endif // defined ( SHALL_DLL )
