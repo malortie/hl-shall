@@ -37,38 +37,6 @@ BOOL IsCurrentMap(const char* mapname)
 	return FStrEq(STRING(gpGlobals->mapname), mapname);
 }
 
-BOOL IsCurrentMapPartOfCampaignOrTraining()
-{
-	static const char* shallModMaps[] =
-	{
-		"beach",
-		"corn",
-		"grave",
-		"hall_trick02",
-		"hall_vamp",
-		"hell",
-		"grave",
-		"htest",
-		"patch",
-		"ship",
-		"sorry",
-		"styx",
-		"trick",
-		"trick02",
-		"vamp",
-		"witch",
-		"woods",
-	};
-
-	BOOL foundMap = FALSE;
-	for (int i = 0; !foundMap && i < ARRAYSIZE(shallModMaps); i++)
-	{
-		if (IsCurrentMap(shallModMaps[i]))
-			foundMap = TRUE;
-	}
-
-	return foundMap;
-}
 
 #endif // defined ( SHALL_DLL )
 float UTIL_WeaponTimeBase( void )
