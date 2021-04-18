@@ -31,14 +31,12 @@
 #include "weapons.h"
 #include "gamerules.h"
 
-#if defined ( SHALL_DLL )
 BOOL IsCurrentMap(const char* mapname)
 {
 	return FStrEq(STRING(gpGlobals->mapname), mapname);
 }
 
 
-#endif // defined ( SHALL_DLL )
 float UTIL_WeaponTimeBase( void )
 {
 #if defined( CLIENT_WEAPONS )

@@ -294,11 +294,7 @@ public:
 	Activity GetSmallFlinchActivity( void );
 	virtual void Killed( entvars_t *pevAttacker, int iGib );
 	virtual void GibMonster( void );
-#if defined ( SHALL_DLL )
 	virtual BOOL ShouldGibMonster( int iGib );
-#else
-	BOOL		 ShouldGibMonster( int iGib );
-#endif // defined ( SHALL_DLL )
 	void		 CallGibMonster( void );
 	virtual BOOL	HasHumanGibs( void );
 	virtual BOOL	HasAlienGibs( void );

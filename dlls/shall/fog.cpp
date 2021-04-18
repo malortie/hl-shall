@@ -23,7 +23,6 @@
 #define WRITE_BOOLEAN(x) WRITE_BYTE((x != 0) ? 1 : 0)
 #endif
 
-#if defined ( SHALL_DLL )
 static BOOL IsHalloweenModMapWithFog()
 {
 	return IsCurrentMap("hell") ||
@@ -31,7 +30,6 @@ static BOOL IsHalloweenModMapWithFog()
 		IsCurrentMap("witch") ||
 		IsCurrentMap("woods");
 }
-#endif // defined ( SHALL_DLL )
 
 int gmsgClientFog = 0;
 
@@ -91,10 +89,8 @@ void CClientFog::Spawn(void)
 	if (m_fogActive)
 		ActivateAndTurnOffPeers();
 
-#if defined ( SHALL_DLL )
 	if (IsHalloweenModMapWithFog())
 		m_fogDensity = 5;
-#endif // defined ( SHALL_DLL )
 }
 
 void CClientFog::KeyValue(KeyValueData *pkvd)

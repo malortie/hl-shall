@@ -280,31 +280,19 @@ void CHeadCrab :: Spawn()
 	Precache( );
 
 	SET_MODEL(ENT(pev), "models/headcrab.mdl");
-#if defined ( SHALL_DLL )
 	// Vampire monsters use human hull size.
 	UTIL_SetSize(pev, VEC_HUMAN_HULL_MIN, VEC_HUMAN_HULL_MAX);
-#else
-	UTIL_SetSize(pev, Vector(-12, -12, 0), Vector(12, 12, 24));
-#endif // defined ( SHALL_DLL )
 
 	pev->solid			= SOLID_SLIDEBOX;
 	pev->movetype		= MOVETYPE_STEP;
-#if defined( SHALL_DLL )
 	// Vampires use red blood.
 	m_bloodColor		= BLOOD_COLOR_RED;
-#else
-	m_bloodColor		= BLOOD_COLOR_GREEN;
-#endif // defined( SHALL_DLL )
 	pev->effects		= 0;
 	pev->health			= gSkillData.headcrabHealth;
 	pev->view_ofs		= Vector ( 0, 0, 20 );// position of the eyes relative to monster's origin.
 	pev->yaw_speed		= 5;//!!! should we put this in the monster's changeanim function since turn rates may vary with state/anim?
-#if defined ( SHALL_DLL )
 	// Allow vampires to see 360 degrees (+180/-180)
 	m_flFieldOfView = -1.0f;
-#else
-	m_flFieldOfView		= 0.5;// indicates the width of this monster's forward view cone ( as a dotproduct result )
-#endif // defined ( SHALL_DLL )
 	m_MonsterState		= MONSTERSTATE_NONE;
 
 	MonsterInit();

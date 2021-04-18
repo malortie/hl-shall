@@ -1856,7 +1856,6 @@ void CTriggerPush :: Touch( CBaseEntity *pOther )
 
 			pevToucher->flags |= FL_BASEVELOCITY;
 //			ALERT( at_console, "Vel %f, base %f\n", pevToucher->velocity.z, pevToucher->basevelocity.z );
-#if defined ( SHALL_DLL )
 			// Use this variable to prevent players from
 			// taking damage once they hit the floor on
 			// final battle.
@@ -1864,7 +1863,6 @@ void CTriggerPush :: Touch( CBaseEntity *pOther )
 			{
 				((CBasePlayer*)pOther)->m_bWasTouchingTriggerPushBeforeFinalBattle = TRUE;
 			}
-#endif // defined ( SHALL_DLL )
 		}
 	}
 }

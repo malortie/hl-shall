@@ -531,12 +531,8 @@ void CISlave :: Spawn()
 
 	pev->solid			= SOLID_SLIDEBOX;
 	pev->movetype		= MOVETYPE_STEP;
-#if defined ( SHALL_DLL )
 	// Witches should use red blood color.
 	m_bloodColor		= BLOOD_COLOR_RED;
-#else
-	m_bloodColor		= BLOOD_COLOR_GREEN;
-#endif // defined ( SHALL_DLL )
 	pev->effects		= 0;
 	pev->health			= gSkillData.slaveHealth;
 	pev->view_ofs		= Vector ( 0, 0, 64 );// position of the eyes relative to monster's origin.

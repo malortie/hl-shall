@@ -198,9 +198,7 @@ public:
 
 	char m_szTeamName[TEAM_NAME_LENGTH];
 
-#if defined ( SHALL_DLL )
 	BOOL m_bWasTouchingTriggerPushBeforeFinalBattle;
-#endif // defined ( SHALL_DLL )
 	BOOL m_fUpdateFog;
 	BOOL ShouldUpdateFog() { return m_fUpdateFog; }
 	void TellClientToUpdateFog() { m_fUpdateFog = TRUE; }

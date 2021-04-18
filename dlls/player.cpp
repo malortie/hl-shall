@@ -118,9 +118,7 @@ TYPEDESCRIPTION	CBasePlayer::m_playerSaveData[] =
 	DEFINE_FIELD( CBasePlayer, m_pTank, FIELD_EHANDLE ),
 	DEFINE_FIELD( CBasePlayer, m_iHideHUD, FIELD_INTEGER ),
 	DEFINE_FIELD( CBasePlayer, m_iFOV, FIELD_INTEGER ),
-#if defined ( SHALL_DLL )
 	DEFINE_FIELD( CBasePlayer, m_bWasTouchingTriggerPushBeforeFinalBattle, FIELD_BOOLEAN ),
-#endif // defined ( SHALL_DLL )
 	DEFINE_FIELD( CBasePlayer, m_fUpdateFog, FIELD_BOOLEAN ),
 	
 	//DEFINE_FIELD( CBasePlayer, m_fDeadTime, FIELD_FLOAT ), // only used in multiplayer games
@@ -448,7 +446,6 @@ void CBasePlayer :: TraceAttack( entvars_t *pevAttacker, float flDamage, Vector 
 
 int CBasePlayer :: TakeDamage( entvars_t *pevInflictor, entvars_t *pevAttacker, float flDamage, int bitsDamageType )
 {
-#if defined ( SHALL_DLL )
 	// If players are descending to the final battle,
 	// prevent them from taking damage. 
 	if (m_bWasTouchingTriggerPushBeforeFinalBattle)
@@ -456,7 +453,6 @@ int CBasePlayer :: TakeDamage( entvars_t *pevInflictor, entvars_t *pevAttacker, 
 		m_bWasTouchingTriggerPushBeforeFinalBattle = FALSE;
 		return 0;
 	}
-#endif // defined ( SHALL_DLL )
 	// have suit diagnose the problem - ie: report damage type
 	int bitsDamage = bitsDamageType;
 	int ffound = TRUE;
@@ -2952,9 +2948,7 @@ void CBasePlayer::Spawn( void )
 	
 	m_flNextChatTime = gpGlobals->time;
 
-#if defined ( SHALL_DLL )
 	m_bWasTouchingTriggerPushBeforeFinalBattle = FALSE;
-#endif // defined ( SHALL_DLL )
 	g_pGameRules->PlayerSpawn( this );
 }
 

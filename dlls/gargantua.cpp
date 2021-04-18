@@ -230,16 +230,6 @@ public:
 	void EyeOn( int level );
 	void EyeUpdate( void );
 	void Leap( void );
-#if !defined ( SHALL_DLL )
-	void StompAttack( void );
-	void FlameCreate( void );
-	void FlameUpdate( void );
-	void FlameControls( float angleX, float angleY );
-	void FlameDestroy( void );
-	inline BOOL FlameIsOn( void ) { return m_pFlame[0] != NULL; }
-
-	void FlameDamage( Vector vecStart, Vector vecEnd, entvars_t *pevInflictor, entvars_t *pevAttacker, float flDamage, int iClassIgnore, int bitsDamageType );
-#endif // !defined ( SHALL_DLL )
 
 	virtual int		Save( CSave &save );
 	virtual int		Restore( CRestore &restore );
@@ -471,242 +461,9 @@ void CGargantua::EyeUpdate( void )
 }
 
 
-#if !defined ( SHALL_DLL )
-void CGargantua::StompAttack( void )
-{
-	TraceResult trace;
-
-	UTIL_MakeVectors( pev->angles );
-	Vector vecStart = pev->origin + Vector(0,0,60) + 35 * gpGlobals->v_forward;
-	Vector vecAim = ShootAtEnemy( vecStart );
-	Vector vecEnd = (vecAim * 1024) + vecStart;
-
-	UTIL_TraceLine( vecStart, vecEnd, ignore_monsters, edict(), &trace );
-	CStomp::StompCreate( vecStart, trace.vecEndPos, 0 );
-	UTIL_ScreenShake( pev->origin, 12.0, 100.0, 2.0, 1000 );
-	EMIT_SOUND_DYN ( edict(), CHAN_WEAPON, pStompSounds[ RANDOM_LONG(0,ARRAYSIZE(pStompSounds)-1) ], 1.0, ATTN_GARG, 0, PITCH_NORM + RANDOM_LONG(-10,10) );
-
-	UTIL_TraceLine( pev->origin, pev->origin - Vector(0,0,20), ignore_monsters, edict(), &trace );
-	if ( trace.flFraction < 1.0 )
-		UTIL_DecalTrace( &trace, DECAL_GARGSTOMP1 );
-}
-
-
-void CGargantua :: FlameCreate( void )
-{
-	int			i;
-	Vector		posGun, angleGun;
-	TraceResult trace;
-
-	UTIL_MakeVectors( pev->angles );
-	
-	for ( i = 0; i < 4; i++ )
-	{
-		if ( i < 2 )
-			m_pFlame[i] = CBeam::BeamCreate( GARG_BEAM_SPRITE_NAME, 240 );
-		else
-			m_pFlame[i] = CBeam::BeamCreate( GARG_BEAM_SPRITE2, 140 );
-		if ( m_pFlame[i] )
-		{
-			int attach = i%2;
-			// attachment is 0 based in GetAttachment
-			GetAttachment( attach+1, posGun, angleGun );
-
-			Vector vecEnd = (gpGlobals->v_forward * GARG_FLAME_LENGTH) + posGun;
-			UTIL_TraceLine( posGun, vecEnd, dont_ignore_monsters, edict(), &trace );
-
-			m_pFlame[i]->PointEntInit( trace.vecEndPos, entindex() );
-			if ( i < 2 )
-				m_pFlame[i]->SetColor( 255, 130, 90 );
-			else
-				m_pFlame[i]->SetColor( 0, 120, 255 );
-			m_pFlame[i]->SetBrightness( 190 );
-			m_pFlame[i]->SetFlags( BEAM_FSHADEIN );
-			m_pFlame[i]->SetScrollRate( 20 );
-			// attachment is 1 based in SetEndAttachment
-			m_pFlame[i]->SetEndAttachment( attach + 2 );
-			CSoundEnt::InsertSound( bits_SOUND_COMBAT, posGun, 384, 0.3 );
-		}
-	}
-	EMIT_SOUND_DYN ( edict(), CHAN_BODY, pBeamAttackSounds[ 1 ], 1.0, ATTN_NORM, 0, PITCH_NORM );
-	EMIT_SOUND_DYN ( edict(), CHAN_WEAPON, pBeamAttackSounds[ 2 ], 1.0, ATTN_NORM, 0, PITCH_NORM );
-}
-
-
-void CGargantua :: FlameControls( float angleX, float angleY )
-{
-	if ( angleY < -180 )
-		angleY += 360;
-	else if ( angleY > 180 )
-		angleY -= 360;
-
-	if ( angleY < -45 )
-		angleY = -45;
-	else if ( angleY > 45 )
-		angleY = 45;
-
-	m_flameX = UTIL_ApproachAngle( angleX, m_flameX, 4 );
-	m_flameY = UTIL_ApproachAngle( angleY, m_flameY, 8 );
-	SetBoneController( 0, m_flameY );
-	SetBoneController( 1, m_flameX );
-}
-
-
-void CGargantua :: FlameUpdate( void )
-{
-	int				i;
-	static float	offset[2] = { 60, -60 };
-	TraceResult		trace;
-	Vector			vecStart, angleGun;
-	BOOL			streaks = FALSE;
-
-	for ( i = 0; i < 2; i++ )
-	{
-		if ( m_pFlame[i] )
-		{
-			Vector vecAim = pev->angles;
-			vecAim.x += m_flameX;
-			vecAim.y += m_flameY;
-
-			UTIL_MakeVectors( vecAim );
-
-			GetAttachment( i+1, vecStart, angleGun );
-			Vector vecEnd = vecStart + (gpGlobals->v_forward * GARG_FLAME_LENGTH); //  - offset[i] * gpGlobals->v_right;
-
-			UTIL_TraceLine( vecStart, vecEnd, dont_ignore_monsters, edict(), &trace );
-
-			m_pFlame[i]->SetStartPos( trace.vecEndPos );
-			m_pFlame[i+2]->SetStartPos( (vecStart * 0.6) + (trace.vecEndPos * 0.4) );
-
-			if ( trace.flFraction != 1.0 && gpGlobals->time > m_streakTime )
-			{
-				StreakSplash( trace.vecEndPos, trace.vecPlaneNormal, 6, 20, 50, 400 );
-				streaks = TRUE;
-				UTIL_DecalTrace( &trace, DECAL_SMALLSCORCH1 + RANDOM_LONG(0,2) );
-			}
-			// RadiusDamage( trace.vecEndPos, pev, pev, gSkillData.gargantuaDmgFire, CLASS_ALIEN_MONSTER, DMG_BURN );
-			FlameDamage( vecStart, trace.vecEndPos, pev, pev, gSkillData.gargantuaDmgFire, CLASS_ALIEN_MONSTER, DMG_BURN );
-
-			MESSAGE_BEGIN( MSG_BROADCAST, SVC_TEMPENTITY );
-				WRITE_BYTE( TE_ELIGHT );
-				WRITE_SHORT( entindex( ) + 0x1000 * (i + 2) );		// entity, attachment
-				WRITE_COORD( vecStart.x );		// origin
-				WRITE_COORD( vecStart.y );
-				WRITE_COORD( vecStart.z );
-				WRITE_COORD( RANDOM_FLOAT( 32, 48 ) );	// radius
-				WRITE_BYTE( 255 );	// R
-				WRITE_BYTE( 255 );	// G
-				WRITE_BYTE( 255 );	// B
-				WRITE_BYTE( 2 );	// life * 10
-				WRITE_COORD( 0 ); // decay
-			MESSAGE_END();
-		}
-	}
-	if ( streaks )
-		m_streakTime = gpGlobals->time;
-}
-
-
-
-void CGargantua :: FlameDamage( Vector vecStart, Vector vecEnd, entvars_t *pevInflictor, entvars_t *pevAttacker, float flDamage, int iClassIgnore, int bitsDamageType )
-{
-	CBaseEntity *pEntity = NULL;
-	TraceResult	tr;
-	float		flAdjustedDamage;
-	Vector		vecSpot;
-
-	Vector vecMid = (vecStart + vecEnd) * 0.5;
-
-	float searchRadius = (vecStart - vecMid).Length();
-
-	Vector vecAim = (vecEnd - vecStart).Normalize( );
-
-	// iterate on all entities in the vicinity.
-	while ((pEntity = UTIL_FindEntityInSphere( pEntity, vecMid, searchRadius )) != NULL)
-	{
-		if ( pEntity->pev->takedamage != DAMAGE_NO )
-		{
-			// UNDONE: this should check a damage mask, not an ignore
-			if ( iClassIgnore != CLASS_NONE && pEntity->Classify() == iClassIgnore )
-			{// houndeyes don't hurt other houndeyes with their attack
-				continue;
-			}
-			
-			vecSpot = pEntity->BodyTarget( vecMid );
-		
-			float dist = DotProduct( vecAim, vecSpot - vecMid );
-			if (dist > searchRadius)
-				dist = searchRadius;
-			else if (dist < -searchRadius)
-				dist = searchRadius;
-			
-			Vector vecSrc = vecMid + dist * vecAim;
-
-			UTIL_TraceLine ( vecSrc, vecSpot, dont_ignore_monsters, ENT(pev), &tr );
-
-			if ( tr.flFraction == 1.0 || tr.pHit == pEntity->edict() )
-			{// the explosion can 'see' this entity, so hurt them!
-				// decrease damage for an ent that's farther from the flame.
-				dist = ( vecSrc - tr.vecEndPos ).Length();
-
-				if (dist > 64)
-				{
-					flAdjustedDamage = flDamage - (dist - 64) * 0.4;
-					if (flAdjustedDamage <= 0)
-						continue;
-				}
-				else
-				{
-					flAdjustedDamage = flDamage;
-				}
-
-				// ALERT( at_console, "hit %s\n", STRING( pEntity->pev->classname ) );
-				if (tr.flFraction != 1.0)
-				{
-					ClearMultiDamage( );
-					pEntity->TraceAttack( pevInflictor, flAdjustedDamage, (tr.vecEndPos - vecSrc).Normalize( ), &tr, bitsDamageType );
-					ApplyMultiDamage( pevInflictor, pevAttacker );
-				}
-				else
-				{
-					pEntity->TakeDamage ( pevInflictor, pevAttacker, flAdjustedDamage, bitsDamageType );
-				}
-			}
-		}
-	}
-}
-
-
-void CGargantua :: FlameDestroy( void )
-{
-	int i;
-
-	EMIT_SOUND_DYN ( edict(), CHAN_WEAPON, pBeamAttackSounds[ 0 ], 1.0, ATTN_NORM, 0, PITCH_NORM );
-	for ( i = 0; i < 4; i++ )
-	{
-		if ( m_pFlame[i] )
-		{
-			UTIL_Remove( m_pFlame[i] );
-			m_pFlame[i] = NULL;
-		}
-	}
-}
-
-#endif // !defined ( SHALL_DLL )
 
 void CGargantua :: PrescheduleThink( void )
 {
-#if !defined ( SHALL_DLL )
-	if ( !HasConditions( bits_COND_SEE_ENEMY ) )
-	{
-		m_seeTime = gpGlobals->time + 5;
-		EyeOff();
-	}
-	else
-		EyeOn( 200 );
-	
-	EyeUpdate();
-#endif // defined ( SHALL_DLL )
 }
 
 
@@ -770,11 +527,6 @@ void CGargantua :: Spawn()
 
 	MonsterInit();
 
-#if !defined ( SHALL_DLL )
-	m_pEyeGlow = CSprite::SpriteCreate( GARG_EYE_SPRITE_NAME, pev->origin, FALSE );
-	m_pEyeGlow->SetTransparency( kRenderGlow, 255, 255, 255, 0, kRenderFxNoDissipation );
-	m_pEyeGlow->SetAttachment( edict(), 1 );
-#endif // !defined ( SHALL_DLL )
 	EyeOff();
 	m_seeTime = gpGlobals->time + 5;
 	m_flameTime = gpGlobals->time + 2;
@@ -855,18 +607,8 @@ void CGargantua::TraceAttack( entvars_t *pevAttacker, float flDamage, Vector vec
 
 	if ( bitsDamageType == 0)
 	{
-#if defined ( SHALL_DLL )
 		// Final boss (Reaper) does not wear armor.
 		// Also, leave it immune to any damage.
-#else
-		if ( pev->dmgtime != gpGlobals->time || (RANDOM_LONG(0,100) < 20) )
-		{
-			UTIL_Ricochet( ptr->vecEndPos, RANDOM_FLOAT(0.5,1.5) );
-			pev->dmgtime = gpGlobals->time;
-//			if ( RANDOM_LONG(0,100) < 25 )
-//				EMIT_SOUND_DYN( ENT(pev), CHAN_BODY, pRicSounds[ RANDOM_LONG(0,ARRAYSIZE(pRicSounds)-1) ], 1.0, ATTN_NORM, 0, PITCH_NORM );
-		}
-#endif // defined ( SHALL_DLL )
 		flDamage = 0;
 	}
 
@@ -920,10 +662,6 @@ void CGargantua::DeathEffect( void )
 void CGargantua::Killed( entvars_t *pevAttacker, int iGib )
 {
 	EyeOff();
-#if !defined ( SHALL_DLL )
-	UTIL_Remove( m_pEyeGlow );
-	m_pEyeGlow = NULL;
-#endif // !defined ( SHALL_DLL )
 	CBaseMonster::Killed( pevAttacker, GIB_NEVER );
 }
 
@@ -948,10 +686,8 @@ BOOL CGargantua::CheckMeleeAttack1( float flDot, float flDist )
 // Flame thrower madness!
 BOOL CGargantua::CheckMeleeAttack2( float flDot, float flDist )
 {
-#if defined ( SHALL_DLL )
 	// Final boss (Reaper) should not use melee attack 2.
 	return FALSE;
-#endif // defined ( SHALL_DLL )
 //	ALERT(at_aiconsole, "CheckMelee(%f, %f)\n", flDot, flDist);
 
 	if ( gpGlobals->time > m_flameTime )
@@ -977,10 +713,8 @@ BOOL CGargantua::CheckMeleeAttack2( float flDot, float flDist )
 //=========================================================
 BOOL CGargantua::CheckRangeAttack1( float flDot, float flDist )
 {
-#if defined ( SHALL_DLL )
 	// Final boss (Reaper) should not use range attack 1.
 	return FALSE;
-#endif // defined ( SHALL_DLL )
 	if ( gpGlobals->time > m_seeTime )
 	{
 		if (flDot >= 0.7 && flDist > GARG_ATTACKDIST)
@@ -1033,10 +767,6 @@ void CGargantua::HandleAnimEvent(MonsterEvent_t *pEvent)
 		break;
 
 	case GARG_AE_STOMP:
-#if !defined ( SHALL_DLL )
-		StompAttack();
-		m_seeTime = gpGlobals->time + 12;
-#endif // !defined ( SHALL_DLL )
 		break;
 
 	case GARG_AE_BREATHE:
@@ -1091,17 +821,9 @@ CBaseEntity* CGargantua::GargantuaCheckTraceHullAttack(float flDist, int iDamage
 Schedule_t *CGargantua::GetScheduleOfType( int Type )
 {
 	// HACKHACK - turn off the flames if they are on and garg goes scripted / dead
-#if !defined ( SHALL_DLL )
-	if ( FlameIsOn() )
-		FlameDestroy();
-#endif // !defined ( SHALL_DLL )
 
 	switch( Type )
 	{
-#if !defined ( SHALL_DLL )
-		case SCHED_MELEE_ATTACK2:
-			return slGargFlame;
-#endif // !defined ( SHALL_DLL )
 		case SCHED_MELEE_ATTACK1:
 			return slGargSwipe;
 		break;
@@ -1115,15 +837,6 @@ void CGargantua::StartTask( Task_t *pTask )
 {
 	switch ( pTask->iTask )
 	{
-#if !defined ( SHALL_DLL )
-	case TASK_FLAME_SWEEP:
-		FlameCreate();
-		m_flWaitFinished = gpGlobals->time + pTask->flData;
-		m_flameTime = gpGlobals->time + 6;
-		m_flameX = 0;
-		m_flameY = 0;
-		break;
-#endif // !defined ( SHALL_DLL )
 
 	case TASK_SOUND_ATTACK:
 		if ( RANDOM_LONG(0,100) < 30 )
@@ -1219,48 +932,6 @@ void CGargantua::RunTask( Task_t *pTask )
 			CBaseMonster::RunTask(pTask);
 		break;
 
-#if !defined ( SHALL_DLL )
-	case TASK_FLAME_SWEEP:
-		if ( gpGlobals->time > m_flWaitFinished )
-		{
-			FlameDestroy();
-			TaskComplete();
-			FlameControls( 0, 0 );
-			SetBoneController( 0, 0 );
-			SetBoneController( 1, 0 );
-		}
-		else
-		{
-			BOOL cancel = FALSE;
-
-			Vector angles = g_vecZero;
-
-			FlameUpdate();
-			CBaseEntity *pEnemy = m_hEnemy;
-			if ( pEnemy )
-			{
-				Vector org = pev->origin;
-				org.z += 64;
-				Vector dir = pEnemy->BodyTarget(org) - org;
-				angles = UTIL_VecToAngles( dir );
-				angles.x = -angles.x;
-				angles.y -= pev->angles.y;
-				if ( dir.Length() > 400 )
-					cancel = TRUE;
-			}
-			if ( std::abs(angles.y) > 60 )
-				cancel = TRUE;
-			
-			if ( cancel )
-			{
-				m_flWaitFinished -= 0.5;
-				m_flameTime -= 0.5;
-			}
-			// FlameControls( angles.x + 2 * sin(gpGlobals->time*8), angles.y + 28 * sin(gpGlobals->time*8.5) );
-			FlameControls( angles.x, angles.y );
-		}
-		break;
-#endif // !defined ( SHALL_DLL )
 
 	default:
 		CBaseMonster::RunTask( pTask );
