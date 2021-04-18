@@ -24,6 +24,9 @@
 #include "particleman.h"
 extern IParticleMan *g_pParticleMan;
 
+#if defined ( CLIENT_FOG )
+#include "clientfog.h"
+#endif // defined ( CLIENT_FOG )
 #define MAX_CLIENTS 32
 
 #if !defined( _TFC )
@@ -86,6 +89,9 @@ void CHud :: MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf )
 	gEngfuncs.pfnServerCmd("sendevents");
 #endif
 
+#if defined ( CLIENT_FOG )
+	ClientFog_Initialize();
+#endif // defined ( CLIENT_FOG )
 	if ( g_pParticleMan )
 		 g_pParticleMan->ResetParticles();
 

@@ -36,6 +36,12 @@
 #include "game.h"
 #include "pm_shared.h"
 #include "hltv.h"
+#if defined ( SHALL_MAPFIXES )
+#include "shall_map_fixes.h"
+#endif // defined ( SHALL_MAPFIXES )
+#if defined ( CLIENT_FOG )
+#include "fog.h"
+#endif // defined ( CLIENT_FOG )
 
 // #define DUCKFIX
 
@@ -117,6 +123,12 @@ TYPEDESCRIPTION	CBasePlayer::m_playerSaveData[] =
 	DEFINE_FIELD( CBasePlayer, m_pTank, FIELD_EHANDLE ),
 	DEFINE_FIELD( CBasePlayer, m_iHideHUD, FIELD_INTEGER ),
 	DEFINE_FIELD( CBasePlayer, m_iFOV, FIELD_INTEGER ),
+#if defined ( SHALL_DLL )
+	DEFINE_FIELD( CBasePlayer, m_bWasTouchingTriggerPushBeforeFinalBattle, FIELD_BOOLEAN ),
+#endif // defined ( SHALL_DLL )
+#if defined ( CLIENT_FOG )
+	DEFINE_FIELD( CBasePlayer, m_fUpdateFog, FIELD_BOOLEAN ),
+#endif // defined ( CLIENT_FOG )
 	
 	//DEFINE_FIELD( CBasePlayer, m_fDeadTime, FIELD_FLOAT ), // only used in multiplayer games
 	//DEFINE_FIELD( CBasePlayer, m_fGameHUDInitialized, FIELD_INTEGER ), // only used in multiplayer games
@@ -236,6 +248,9 @@ void LinkUserMessages( void )
 	gmsgStatusText = REG_USER_MSG("StatusText", -1);
 	gmsgStatusValue = REG_USER_MSG("StatusValue", 3); 
 
+#if defined ( CLIENT_FOG )
+	ClientFog_RegisterMessage();
+#endif // defined ( CLIENT_FOG )
 }
 
 LINK_ENTITY_TO_CLASS( player, CBasePlayer );
@@ -442,6 +457,15 @@ void CBasePlayer :: TraceAttack( entvars_t *pevAttacker, float flDamage, Vector 
 
 int CBasePlayer :: TakeDamage( entvars_t *pevInflictor, entvars_t *pevAttacker, float flDamage, int bitsDamageType )
 {
+#if defined ( SHALL_DLL )
+	// If players are descending to the final battle,
+	// prevent them from taking damage. 
+	if (m_bWasTouchingTriggerPushBeforeFinalBattle)
+	{
+		m_bWasTouchingTriggerPushBeforeFinalBattle = FALSE;
+		return 0;
+	}
+#endif // defined ( SHALL_DLL )
 	// have suit diagnose the problem - ie: report damage type
 	int bitsDamage = bitsDamageType;
 	int ffound = TRUE;
@@ -2937,6 +2961,13 @@ void CBasePlayer::Spawn( void )
 	
 	m_flNextChatTime = gpGlobals->time;
 
+#if defined ( SHALL_DLL )
+	// On 2001 version level, give the the suit to player.
+	if (IsCurrentMap("trick"))
+		pev->weapons |= (1 << WEAPON_SUIT);
+
+	m_bWasTouchingTriggerPushBeforeFinalBattle = FALSE;
+#endif // defined ( SHALL_DLL )
 	g_pGameRules->PlayerSpawn( this );
 }
 
@@ -2982,6 +3013,9 @@ void CBasePlayer :: Precache( void )
 
 	if ( gInitHUD )
 		m_fInitHUD = TRUE;
+#if defined ( CLIENT_FOG )
+	TellClientToUpdateFog();
+#endif // defined ( CLIENT_FOG )
 }
 
 
@@ -4178,6 +4212,23 @@ void CBasePlayer :: UpdateClientData( void )
 		UpdateStatusBar();
 		m_flNextSBarUpdateTime = gpGlobals->time + 0.2;
 	}
+#if defined ( CLIENT_FOG )
+	if (ShouldUpdateFog())
+	{
+		BOOL foundActiveFogEntity = FALSE;
+		CBaseEntity* fogEntity = NULL;
+		while (!foundActiveFogEntity && (fogEntity = UTIL_FindEntityByClassname(fogEntity, FOG_ENTITY_CLASSNAME)) != NULL)
+		{
+			if (ClientFog_IsFogEntityActive(fogEntity))
+			{
+				foundActiveFogEntity = TRUE;
+				ClientFog_UpdateClientSide(fogEntity, this);
+			}
+		}
+
+		MarkFogAsUpdated();
+	}
+#endif // defined ( CLIENT_FOG )
 }
 
 

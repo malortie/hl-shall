@@ -230,6 +230,7 @@ public:
 	void EyeOn( int level );
 	void EyeUpdate( void );
 	void Leap( void );
+#if !defined ( SHALL_DLL )
 	void StompAttack( void );
 	void FlameCreate( void );
 	void FlameUpdate( void );
@@ -238,6 +239,7 @@ public:
 	inline BOOL FlameIsOn( void ) { return m_pFlame[0] != NULL; }
 
 	void FlameDamage( Vector vecStart, Vector vecEnd, entvars_t *pevInflictor, entvars_t *pevAttacker, float flDamage, int iClassIgnore, int bitsDamageType );
+#endif // !defined ( SHALL_DLL )
 
 	virtual int		Save( CSave &save );
 	virtual int		Restore( CRestore &restore );
@@ -469,6 +471,7 @@ void CGargantua::EyeUpdate( void )
 }
 
 
+#if !defined ( SHALL_DLL )
 void CGargantua::StompAttack( void )
 {
 	TraceResult trace;
@@ -689,9 +692,11 @@ void CGargantua :: FlameDestroy( void )
 	}
 }
 
+#endif // !defined ( SHALL_DLL )
 
 void CGargantua :: PrescheduleThink( void )
 {
+#if !defined ( SHALL_DLL )
 	if ( !HasConditions( bits_COND_SEE_ENEMY ) )
 	{
 		m_seeTime = gpGlobals->time + 5;
@@ -701,6 +706,7 @@ void CGargantua :: PrescheduleThink( void )
 		EyeOn( 200 );
 	
 	EyeUpdate();
+#endif // defined ( SHALL_DLL )
 }
 
 
@@ -764,9 +770,11 @@ void CGargantua :: Spawn()
 
 	MonsterInit();
 
+#if !defined ( SHALL_DLL )
 	m_pEyeGlow = CSprite::SpriteCreate( GARG_EYE_SPRITE_NAME, pev->origin, FALSE );
 	m_pEyeGlow->SetTransparency( kRenderGlow, 255, 255, 255, 0, kRenderFxNoDissipation );
 	m_pEyeGlow->SetAttachment( edict(), 1 );
+#endif // !defined ( SHALL_DLL )
 	EyeOff();
 	m_seeTime = gpGlobals->time + 5;
 	m_flameTime = gpGlobals->time + 2;
@@ -847,6 +855,10 @@ void CGargantua::TraceAttack( entvars_t *pevAttacker, float flDamage, Vector vec
 
 	if ( bitsDamageType == 0)
 	{
+#if defined ( SHALL_DLL )
+		// Final boss (Reaper) does not wear armor.
+		// Also, leave it immune to any damage.
+#else
 		if ( pev->dmgtime != gpGlobals->time || (RANDOM_LONG(0,100) < 20) )
 		{
 			UTIL_Ricochet( ptr->vecEndPos, RANDOM_FLOAT(0.5,1.5) );
@@ -854,6 +866,7 @@ void CGargantua::TraceAttack( entvars_t *pevAttacker, float flDamage, Vector vec
 //			if ( RANDOM_LONG(0,100) < 25 )
 //				EMIT_SOUND_DYN( ENT(pev), CHAN_BODY, pRicSounds[ RANDOM_LONG(0,ARRAYSIZE(pRicSounds)-1) ], 1.0, ATTN_NORM, 0, PITCH_NORM );
 		}
+#endif // defined ( SHALL_DLL )
 		flDamage = 0;
 	}
 
@@ -907,8 +920,10 @@ void CGargantua::DeathEffect( void )
 void CGargantua::Killed( entvars_t *pevAttacker, int iGib )
 {
 	EyeOff();
+#if !defined ( SHALL_DLL )
 	UTIL_Remove( m_pEyeGlow );
 	m_pEyeGlow = NULL;
+#endif // !defined ( SHALL_DLL )
 	CBaseMonster::Killed( pevAttacker, GIB_NEVER );
 }
 
@@ -933,6 +948,10 @@ BOOL CGargantua::CheckMeleeAttack1( float flDot, float flDist )
 // Flame thrower madness!
 BOOL CGargantua::CheckMeleeAttack2( float flDot, float flDist )
 {
+#if defined ( SHALL_DLL )
+	// Final boss (Reaper) should not use melee attack 2.
+	return FALSE;
+#endif // defined ( SHALL_DLL )
 //	ALERT(at_aiconsole, "CheckMelee(%f, %f)\n", flDot, flDist);
 
 	if ( gpGlobals->time > m_flameTime )
@@ -958,6 +977,10 @@ BOOL CGargantua::CheckMeleeAttack2( float flDot, float flDist )
 //=========================================================
 BOOL CGargantua::CheckRangeAttack1( float flDot, float flDist )
 {
+#if defined ( SHALL_DLL )
+	// Final boss (Reaper) should not use range attack 1.
+	return FALSE;
+#endif // defined ( SHALL_DLL )
 	if ( gpGlobals->time > m_seeTime )
 	{
 		if (flDot >= 0.7 && flDist > GARG_ATTACKDIST)
@@ -1010,8 +1033,10 @@ void CGargantua::HandleAnimEvent(MonsterEvent_t *pEvent)
 		break;
 
 	case GARG_AE_STOMP:
+#if !defined ( SHALL_DLL )
 		StompAttack();
 		m_seeTime = gpGlobals->time + 12;
+#endif // !defined ( SHALL_DLL )
 		break;
 
 	case GARG_AE_BREATHE:
@@ -1066,13 +1091,17 @@ CBaseEntity* CGargantua::GargantuaCheckTraceHullAttack(float flDist, int iDamage
 Schedule_t *CGargantua::GetScheduleOfType( int Type )
 {
 	// HACKHACK - turn off the flames if they are on and garg goes scripted / dead
+#if !defined ( SHALL_DLL )
 	if ( FlameIsOn() )
 		FlameDestroy();
+#endif // !defined ( SHALL_DLL )
 
 	switch( Type )
 	{
+#if !defined ( SHALL_DLL )
 		case SCHED_MELEE_ATTACK2:
 			return slGargFlame;
+#endif // !defined ( SHALL_DLL )
 		case SCHED_MELEE_ATTACK1:
 			return slGargSwipe;
 		break;
@@ -1086,6 +1115,7 @@ void CGargantua::StartTask( Task_t *pTask )
 {
 	switch ( pTask->iTask )
 	{
+#if !defined ( SHALL_DLL )
 	case TASK_FLAME_SWEEP:
 		FlameCreate();
 		m_flWaitFinished = gpGlobals->time + pTask->flData;
@@ -1093,6 +1123,7 @@ void CGargantua::StartTask( Task_t *pTask )
 		m_flameX = 0;
 		m_flameY = 0;
 		break;
+#endif // !defined ( SHALL_DLL )
 
 	case TASK_SOUND_ATTACK:
 		if ( RANDOM_LONG(0,100) < 30 )
@@ -1188,6 +1219,7 @@ void CGargantua::RunTask( Task_t *pTask )
 			CBaseMonster::RunTask(pTask);
 		break;
 
+#if !defined ( SHALL_DLL )
 	case TASK_FLAME_SWEEP:
 		if ( gpGlobals->time > m_flWaitFinished )
 		{
@@ -1228,6 +1260,7 @@ void CGargantua::RunTask( Task_t *pTask )
 			FlameControls( angles.x, angles.y );
 		}
 		break;
+#endif // !defined ( SHALL_DLL )
 
 	default:
 		CBaseMonster::RunTask( pTask );

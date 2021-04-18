@@ -31,6 +31,55 @@
 #include "weapons.h"
 #include "gamerules.h"
 
+#if defined ( SHALL_DLL )
+BOOL IsCurrentMap(const char* mapname)
+{
+	return FStrEq(STRING(gpGlobals->mapname), mapname);
+}
+
+BOOL IsCurrentMapPartOfCampaignOrTraining()
+{
+	static const char* shallModMaps[] =
+	{
+		"beach",
+		"corn",
+		"grave",
+		"hall_trick02",
+		"hall_vamp",
+		"hell",
+		"grave",
+		"htest",
+		"patch",
+		"ship",
+		"sorry",
+		"styx",
+		"trick",
+		"trick02",
+		"vamp",
+		"witch",
+		"woods",
+	};
+
+	BOOL foundMap = FALSE;
+	for (int i = 0; !foundMap && i < ARRAYSIZE(shallModMaps); i++)
+	{
+		if (IsCurrentMap(shallModMaps[i]))
+			foundMap = TRUE;
+	}
+
+	return foundMap;
+}
+
+#define IDEAL_RENDER_DISTANCE_FOR_SHALL_MOD		16384
+
+float GetIdealRenderDistance(float defaultDistance)
+{
+	if (IsCurrentMapPartOfCampaignOrTraining())
+		return IDEAL_RENDER_DISTANCE_FOR_SHALL_MOD;
+
+	return defaultDistance;
+}
+#endif // defined ( SHALL_DLL )
 float UTIL_WeaponTimeBase( void )
 {
 #if defined( CLIENT_WEAPONS )

@@ -33,6 +33,9 @@
 #include "weapons.h"
 #include "gamerules.h"
 #include "teamplay_gamerules.h"
+#if defined ( SHALL_MAPFIXES )
+#include "shall_map_fixes.h"
+#endif // defined ( SHALL_MAPFIXES )
 
 extern CGraph WorldGraph;
 extern CSoundEnt *pSoundEnt;
@@ -474,6 +477,9 @@ void CWorld :: Spawn( void )
 	g_fGameOver = FALSE;
 	Precache( );
 	g_flWeaponCheat = CVAR_GET_FLOAT( "sv_cheats" );  // Is the impulse 101 command allowed?
+#if defined ( SHALL_MAPFIXES )
+	MapFixes_ApplyAllPossibleFixes();
+#endif // defined ( SHALL_MAPFIXES )
 }
 
 void CWorld :: Precache( void )
@@ -693,7 +699,14 @@ void CWorld :: KeyValue( KeyValueData *pkvd )
 	}
 	else if ( FStrEq(pkvd->szKeyName, "MaxRange") )
 	{
+#if defined ( SHALL_DLL )
+		// Since this mod features large levels,
+		// therefore adjust the view distance to
+		// render a farer distance.
+		pev->speed = GetIdealRenderDistance(atof(pkvd->szValue));
+#else
 		pev->speed = atof(pkvd->szValue);
+#endif // defined ( SHALL_DLL )
 		pkvd->fHandled = TRUE;
 	}
 	else if ( FStrEq(pkvd->szKeyName, "chaptertitle") )

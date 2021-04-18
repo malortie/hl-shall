@@ -544,3 +544,8 @@ int UTIL_SharedRandomLong( unsigned int seed, int low, int high );
 float UTIL_SharedRandomFloat( unsigned int seed, float low, float high );
 
 float UTIL_WeaponTimeBase( void );
+#if defined ( SHALL_DLL )
+BOOL IsCurrentMap(const char* mapname);
+BOOL IsCurrentMapPartOfCampaignOrTraining();
+float GetIdealRenderDistance(float defaultDistance);
+#endif // defined ( SHALL_DLL )

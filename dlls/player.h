@@ -198,6 +198,15 @@ public:
 
 	char m_szTeamName[TEAM_NAME_LENGTH];
 
+#if defined ( SHALL_DLL )
+	BOOL m_bWasTouchingTriggerPushBeforeFinalBattle;
+#endif // defined ( SHALL_DLL )
+#if defined ( CLIENT_FOG )
+	BOOL m_fUpdateFog;
+	BOOL ShouldUpdateFog() { return m_fUpdateFog; }
+	void TellClientToUpdateFog() { m_fUpdateFog = TRUE; }
+	void MarkFogAsUpdated() { m_fUpdateFog = FALSE; }
+#endif // defined ( CLIENT_FOG )
 	virtual void Spawn( void );
 	void Pain( void );
 

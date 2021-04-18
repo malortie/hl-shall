@@ -218,6 +218,9 @@ int CAGrunt :: ISoundMask ( void )
 //=========================================================
 void CAGrunt :: TraceAttack( entvars_t *pevAttacker, float flDamage, Vector vecDir, TraceResult *ptr, int bitsDamageType)
 {
+#if defined ( SHALL_DLL )
+	// Pumpkin beats do not wear armors.
+#else
 	if ( ptr->iHitgroup == 10 && (bitsDamageType & (DMG_BULLET | DMG_SLASH | DMG_CLUB)))
 	{
 		// hit armor
@@ -254,6 +257,7 @@ void CAGrunt :: TraceAttack( entvars_t *pevAttacker, float flDamage, Vector vecD
 			flDamage = 0.1;// don't hurt the monster much, but allow bits_COND_LIGHT_DAMAGE to be generated
 	}
 	else
+#endif // defined ( SHALL_DLL )
 	{
 		SpawnBlood(ptr->vecEndPos, BloodColor(), flDamage);// a little surface blood.
 		TraceBleed( flDamage, vecDir, ptr, bitsDamageType );
@@ -581,7 +585,12 @@ void CAGrunt :: Spawn()
 
 	pev->solid			= SOLID_SLIDEBOX;
 	pev->movetype		= MOVETYPE_STEP;
+#if defined( SHALL_DLL )
+	// Pumpkin beasts (jack o lantern) use red blood.
+	m_bloodColor		= BLOOD_COLOR_RED;
+#else
 	m_bloodColor		= BLOOD_COLOR_GREEN;
+#endif // defined( SHALL_DLL )
 	pev->effects		= 0;
 	pev->health			= gSkillData.agruntHealth;
 	m_flFieldOfView		= 0.2;// indicates the width of this monster's forward view cone ( as a dotproduct result )

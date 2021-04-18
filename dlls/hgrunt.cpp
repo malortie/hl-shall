@@ -145,6 +145,9 @@ public:
 	void Shotgun ( void );
 	void PrescheduleThink ( void );
 	void GibMonster( void );
+#if defined ( SHALL_DLL )
+	BOOL ShouldGibMonster( int iGib );
+#endif // defined ( SHALL_DLL )
 	void SpeakSentence( void );
 
 	int	Save( CSave &save ); 
@@ -160,6 +163,9 @@ public:
 
 	BOOL FOkToSpeak( void );
 	void JustSpoke( void );
+#if defined ( SHALL_DLL )
+	BOOL IsWhiteLadySpirit();
+#endif // defined ( SHALL_DLL )
 
 	CUSTOM_SCHEDULES;
 	static TYPEDESCRIPTION m_SaveData[];
@@ -309,6 +315,14 @@ void CHGrunt :: GibMonster ( void )
 		}
 	}
 
+#if defined ( SHALL_DLL )
+	if (IsWhiteLadySpirit())
+	{
+		// White lady spirits should not be gibbed.
+		FadeMonster();
+		return;
+	}
+#endif // defined ( SHALL_DLL )
 	CBaseMonster :: GibMonster();
 }
 
@@ -330,6 +344,11 @@ int CHGrunt :: ISoundMask ( void )
 //=========================================================
 BOOL CHGrunt :: FOkToSpeak( void )
 {
+#if defined ( SHALL_DLL )
+	// Scarecrows; werewolves; white Ladies; hell minions;
+	// should not use team radio.
+	return FALSE;
+#endif // defined ( SHALL_DLL )
 // if someone else is talking, don't speak
 	if (gpGlobals->time <= CTalkMonster::g_talkWaitTime)
 		return FALSE;
@@ -443,6 +462,11 @@ BOOL CHGrunt :: CheckMeleeAttack1 ( float flDot, float flDist )
 //=========================================================
 BOOL CHGrunt :: CheckRangeAttack1 ( float flDot, float flDist )
 {
+#if defined ( SHALL_DLL )
+	// Scarecrows; werewolves; white Ladies; hell minions;
+	// cannot use range attacks.
+	return FALSE;
+#endif // defined ( SHALL_DLL )
 	if ( !HasConditions( bits_COND_ENEMY_OCCLUDED ) && flDist <= 2048 && flDot >= 0.5 && NoFriendlyFire() )
 	{
 		TraceResult	tr;
@@ -473,6 +497,11 @@ BOOL CHGrunt :: CheckRangeAttack1 ( float flDot, float flDist )
 //=========================================================
 BOOL CHGrunt :: CheckRangeAttack2 ( float flDot, float flDist )
 {
+#if defined ( SHALL_DLL )
+	// Scarecrows; werewolves; white Ladies; hell minions;
+	// cannot use range attacks.
+	return FALSE;
+#endif // defined ( SHALL_DLL )
 	if (! FBitSet(pev->weapons, (HGRUNT_HANDGRENADE | HGRUNT_GRENADELAUNCHER)))
 	{
 		return FALSE;
@@ -603,6 +632,10 @@ BOOL CHGrunt :: CheckRangeAttack2 ( float flDot, float flDist )
 //=========================================================
 void CHGrunt :: TraceAttack( entvars_t *pevAttacker, float flDamage, Vector vecDir, TraceResult *ptr, int bitsDamageType)
 {
+#if defined ( SHALL_DLL )
+	// Scarecrows; werewolves; white Ladies; hell minions;
+	// do not wear armors or helmets.
+#else
 	// check for helmet shot
 	if (ptr->iHitgroup == 11)
 	{
@@ -620,6 +653,7 @@ void CHGrunt :: TraceAttack( entvars_t *pevAttacker, float flDamage, Vector vecD
 		// it's head shot anyways
 		ptr->iHitgroup = HITGROUP_HEAD;
 	}
+#endif // defined ( SHALL_DLL )
 	CSquadMonster::TraceAttack( pevAttacker, flDamage, vecDir, ptr, bitsDamageType );
 }
 
@@ -988,7 +1022,13 @@ void CHGrunt :: Spawn()
 	m_bloodColor		= BLOOD_COLOR_RED;
 	pev->effects		= 0;
 	pev->health			= gSkillData.hgruntHealth;
+#if defined ( SHALL_DLL )
+	// Allow Scarecrows; werewolves; white Ladies; hell minions;
+	// are allowed to see 360 degrees (+180/-180).
+	m_flFieldOfView		= -1.0f;
+#else
 	m_flFieldOfView		= 0.2;// indicates the width of this monster's forward view cone ( as a dotproduct result )
+#endif // defined ( SHALL_DLL )
 	m_MonsterState		= MONSTERSTATE_NONE;
 	m_flNextGrenadeCheck = gpGlobals->time + 1;
 	m_flNextPainTime	= gpGlobals->time;
@@ -1913,6 +1953,7 @@ void CHGrunt :: SetActivity ( Activity NewActivity )
 			iSequence = LookupSequence( "launchgrenade" );
 		}
 		break;
+#if !defined ( SHALL_DLL )
 	case ACT_RUN:
 		if ( pev->health <= HGRUNT_LIMP_HEALTH )
 		{
@@ -1942,6 +1983,7 @@ void CHGrunt :: SetActivity ( Activity NewActivity )
 		}
 		iSequence = LookupActivity ( NewActivity );
 		break;
+#endif // !defined ( SHALL_DLL )
 	default:
 		iSequence = LookupActivity ( NewActivity );
 		break;
@@ -1974,7 +2016,44 @@ void CHGrunt :: SetActivity ( Activity NewActivity )
 //=========================================================
 Schedule_t *CHGrunt :: GetSchedule( void )
 {
+#if defined ( SHALL_DLL )
+	if (m_MonsterState == MONSTERSTATE_PRONE)
+	{
+		return CSquadMonster::GetSchedule();
+	}
 
+	switch (m_MonsterState)
+	{
+	case MONSTERSTATE_IDLE:
+		{
+			return GetScheduleOfType(SCHED_IDLE_STAND);
+		}
+		break;
+	case MONSTERSTATE_ALERT:
+		{
+			return GetScheduleOfType(SCHED_ALERT_STAND);
+		}
+		break;
+	case MONSTERSTATE_COMBAT:
+		{
+			if (HasConditions(bits_COND_SEE_ENEMY) && !HasConditions(bits_COND_ENEMY_OCCLUDED))
+			{
+				if (HasConditions(bits_COND_CAN_MELEE_ATTACK1))
+				{
+					return GetScheduleOfType(SCHED_MELEE_ATTACK1);
+				}
+				if (HasConditions(bits_COND_CAN_MELEE_ATTACK2))
+				{
+					return GetScheduleOfType(SCHED_MELEE_ATTACK2);
+				}
+			}
+
+			return GetScheduleOfType(SCHED_CHASE_ENEMY);
+		}
+	default:
+		return CSquadMonster::GetSchedule();
+	}
+#else
 	// clear old sentence
 	m_iSentence = HGRUNT_SENT_NONE;
 
@@ -2213,6 +2292,7 @@ Schedule_t *CHGrunt :: GetSchedule( void )
 			}
 		}
 	}
+#endif // defined ( SHALL_DLL )
 	
 	// no special cases here, call the base class
 	return CSquadMonster :: GetSchedule();
@@ -2364,6 +2444,16 @@ Schedule_t* CHGrunt :: GetScheduleOfType ( int Type )
 		{
 			return &slGruntRepelLand[ 0 ];
 		}
+#if defined ( SHALL_DLL )
+	// Scarecrows; werewolves; white Ladies; hell minions;
+	// should not use flinch schedule.
+	case SCHED_ALERT_SMALL_FLINCH:
+	case SCHED_ALERT_BIG_FLINCH:
+	case SCHED_SMALL_FLINCH:
+		{
+			return GetScheduleOfType( SCHED_COMBAT_STAND );
+		}
+#endif // defined ( SHALL_DLL )
 	default:
 		{
 			return CSquadMonster :: GetScheduleOfType ( Type );
@@ -2371,6 +2461,22 @@ Schedule_t* CHGrunt :: GetScheduleOfType ( int Type )
 	}
 }
 
+#if defined ( SHALL_DLL )
+BOOL CHGrunt::ShouldGibMonster(int iGib)
+{
+	// Gibbing is allowed if the current model
+	// is not a white lady (spirit).
+	if (IsWhiteLadySpirit())
+		return FALSE;
+
+	return CSquadMonster::ShouldGibMonster(iGib);
+}
+
+BOOL CHGrunt::IsWhiteLadySpirit()
+{
+	return GetBodygroup(HEAD_GROUP) == HEAD_GRUNT;
+}
+#endif // defined ( SHALL_DLL )
 
 //=========================================================
 // CHGruntRepel - when triggered, spawns a monster_human_grunt

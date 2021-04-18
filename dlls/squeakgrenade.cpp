@@ -49,7 +49,12 @@ class CSqueakGrenade : public CGrenade
 	int  Classify( void );
 	void EXPORT SuperBounceTouch( CBaseEntity *pOther );
 	void EXPORT HuntThink( void );
+#if defined ( SHALL_DLL )
+	// Bats should use red blood color.
+	int  BloodColor( void ) { return BLOOD_COLOR_RED; }
+#else
 	int  BloodColor( void ) { return BLOOD_COLOR_YELLOW; }
+#endif
 	void Killed( entvars_t *pevAttacker, int iGib );
 	void GibMonster( void );
 

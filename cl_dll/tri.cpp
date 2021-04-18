@@ -22,6 +22,9 @@
 #include "tri.h"
 extern IParticleMan *g_pParticleMan;
 
+#if defined ( CLIENT_FOG )
+#include "clientfog.h"
+#endif // defined ( CLIENT_FOG )
 /*
 =================
 HUD_DrawNormalTriangles
@@ -55,6 +58,9 @@ void CL_DLLEXPORT HUD_DrawTransparentTriangles( void )
 	RunEventList();
 #endif
 
+#if defined ( CLIENT_FOG )
+	ClientFog_Render();
+#endif // defined ( CLIENT_FOG )
 	if ( g_pParticleMan )
 		 g_pParticleMan->Update();
 }

@@ -915,6 +915,10 @@ public:
 		return FALSE;
 #endif
 	}
+#if defined ( SHALL_DLL )
+	BOOL HasInfiniteAmmo();
+	BOOL IsUseable();
+#endif // defined ( SHALL_DLL )
 };
 
 class CSatchel : public CBasePlayerWeapon

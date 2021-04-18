@@ -30,6 +30,9 @@
 #include "../hud_iface.h"
 #include "../com_weapons.h"
 #include "../demo.h"
+#if defined ( CLIENT_FOG )
+#include "clientfog.h"
+#endif // defined ( CLIENT_FOG )
 
 extern globalvars_t *gpGlobals;
 extern int g_iUser1;
@@ -1078,4 +1081,7 @@ void CL_DLLEXPORT HUD_PostRunCmd( struct local_state_s *from, struct local_state
 	
 	// All games can use FOV state
 	g_lastFOV = to->client.fov;
+#if defined ( CLIENT_FOG )
+	ClientFog_Update(to);
+#endif // defined ( CLIENT_FOG )
 }
