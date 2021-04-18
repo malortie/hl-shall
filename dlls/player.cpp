@@ -36,9 +36,6 @@
 #include "game.h"
 #include "pm_shared.h"
 #include "hltv.h"
-#if defined ( SHALL_MAPFIXES )
-#include "shall_map_fixes.h"
-#endif // defined ( SHALL_MAPFIXES )
 #include "fog.h"
 
 // #define DUCKFIX
