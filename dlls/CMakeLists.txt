@@ -50,6 +50,7 @@ set(LINK_OPTS_RELEASE
 # Include directories
 set(INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/shall
   ${ENGINE_DIR}
   ${COMMON_DIR}
   ${PM_SHARED_DIR}
@@ -105,6 +106,7 @@ set(HEADER_FILES
   ${PM_SHARED_DIR}/pm_movevars.h
   ${PM_SHARED_DIR}/pm_shared.h
   ${MOD_CONFIG_FILE_PATH}
+  shall/fog.h
 )
 
 # Source files
@@ -208,6 +210,7 @@ set(SOURCE_FILES
   xen.cpp
   zombie.cpp
   ${GAME_SHARED_DIR}/voice_gamemgr.cpp
+  shall/fog.cpp
 )
 
 set(PM_SHARED_SOURCE_FILES

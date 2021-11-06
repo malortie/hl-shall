@@ -48,6 +48,7 @@ set(LINK_OPTS_RELEASE
 set(INCLUDE_DIRS 
   ${DLLS_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/shall
   ${PUBLIC_DIR}
   ${COMMON_DIR}
   ${PM_SHARED_DIR}
@@ -100,6 +101,7 @@ set(HEADER_FILES
   ${PM_SHARED_DIR}/pm_movevars.h
   ${PM_SHARED_DIR}/pm_shared.h
   ${MOD_CONFIG_FILE_PATH}
+  shall/clientfog.h
 )
 
 # Source files
@@ -184,6 +186,7 @@ set(SOURCE_FILES
   ${GAME_SHARED_DIR}/vgui_slider2.cpp
   ${GAME_SHARED_DIR}/voice_banmgr.cpp
   ${PUBLIC_DIR}/interface.cpp
+  shall/clientfog.cpp
 )
 
 set(PM_SHARED_SOURCE_FILES
