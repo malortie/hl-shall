@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [halloween/2.0.0] - 2021-04-18
+## [2.0.0] - 2021-11-07
 
 ### Added
 
@@ -20,13 +20,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hardcoded maps fixes
 - Infinite handgrenade ammo on map witch
 
-## [halloween/1.0.1] - 2017-07-30
+## [1.0.1] - 2017-07-30
 
 ### Added
 
 - Missing fog entity
 
-## [halloween/1.0.0] - 2017-07-28
+## [1.0.0] - 2017-07-28
 
 ### Added
 
